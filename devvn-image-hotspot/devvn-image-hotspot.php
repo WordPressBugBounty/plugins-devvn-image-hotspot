@@ -4,7 +4,7 @@ Plugin Name: Image Hotspot by DevVN
 Plugin URI: https://levantoan.com/devvn-image-hotspot
 Description: Image Hotspot help you add hotspot to your images.
 Author: Le Van Toan
-Version: 1.2.8
+Version: 1.2.9
 Author URI: https://levantoan.com/
 Text Domain: devvn-image-hotspot
 Domain Path: /languages
@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
-define('DEVVN_IHOTSPOT_VER', '1.2.8');
+define('DEVVN_IHOTSPOT_VER', '1.2.9');
 define('DEVVN_IHOTSPOT_DEV_MOD', true);
 
 if ( !defined( 'DEVVN_IHOTSPOT_BASENAME' ) )
@@ -228,8 +228,12 @@ function devvn_ihotspot_meta_box_callback( $post ) {
 	</div>
 	<div class="wrap_svl view-has-value" id="body_drag">
 		<div class="images_wrap">
-			<?php if($maps_images):?>
-			<img src="<?php echo esc_attr($maps_images); ?>">
+			<?php
+			if($maps_images):
+			$image_info = get_image_info_from_url($maps_images);
+            $alt = isset($image_info['alt']) ? sanitize_text_field($image_info['alt']) : '';
+            ?>
+			<img src="<?php echo esc_attr($maps_images); ?>" alt="<?php echo esc_attr($alt);?>">
 			<?php endif;?>
 		</div>	
 		<?php if(is_array($data_points)):?>
@@ -673,3 +677,33 @@ function devvn_ihotspot_convert_array_data($inputArray = array()){
 	return $aOutput;
 }
 
+if(!function_exists('get_image_info_from_url')){
+    function get_image_info_from_url($image_url) {
+        global $wpdb;
+
+        $upload_dir = wp_upload_dir();
+        $relative_path = str_replace($upload_dir['baseurl'] . '/', '', $image_url);
+
+        $attachment_id = $wpdb->get_var( $wpdb->prepare( "
+            SELECT post_id FROM {$wpdb->postmeta}
+            WHERE meta_key = '_wp_attached_file'
+            AND meta_value = %s
+            LIMIT 1
+        ", $relative_path ) );
+
+        if (!$attachment_id) return false;
+
+        $alt      = get_post_meta($attachment_id, '_wp_attachment_image_alt', true);
+        $title    = get_the_title($attachment_id);
+        $caption  = wp_get_attachment_caption($attachment_id);
+        $desc     = get_post_field('post_content', $attachment_id);
+
+        return [
+            'ID'      => $attachment_id,
+            'alt'     => $alt,
+            'title'   => $title,
+            'caption' => $caption,
+            'desc'    => $desc,
+        ];
+    }
+}

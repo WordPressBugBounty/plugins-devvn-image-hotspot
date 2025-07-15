@@ -65,7 +65,13 @@ function devvn_ihotspot_shortcode_func($atts){
 	<div class="wrap_svl_center_box">
 	<div class="wrap_svl" id="body_drag_<?php echo esc_attr($idPost);?>">
 		<div class="images_wrap">
-		<img src="<?php echo esc_attr($maps_images); ?>">
+            <?php
+            if($maps_images):
+                $image_info = get_image_info_from_url($maps_images);
+                $alt = isset($image_info['alt']) ? sanitize_text_field($image_info['alt']) : '';
+                ?>
+                <img src="<?php echo esc_attr($maps_images); ?>" alt="<?php echo esc_attr($alt);?>">
+            <?php endif;?>
 		</div>	
 		 <?php if(is_array($data_points)):?>
 		 <?php $stt = 1;foreach ($data_points as $point):
